@@ -64,4 +64,4 @@ RUN set -ex \
 
 VOLUME /dist
 
-cmd cp -rf dist/* /dist/
+CMD cp -rf dist/* /dist/
