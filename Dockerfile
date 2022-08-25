@@ -10,7 +10,7 @@ RUN set -ex; \
     apt-get install -y golang-1.18 git file make
 
 RUN set -ex; \
-    git clone -b ${COMPOSE_VERSION} https://github.com/docker/compose /opt/compose; \
+    git clone -b ${COMPOSE_VERSION} https://github.com/docker/compose /opt/compose
 
 WORKDIR /opt/compose
 
@@ -25,7 +25,7 @@ RUN set -ex; \
     go mod vendor; \
     PKG=github.com/docker/compose/v2 VERSION=$(git describe --match 'v[0-9]*' --dirty='.m' --always --tags); \
     echo "-X ${PKG}/internal.Version=${VERSION}" | tee /tmp/.ldflags; \
-    echo -n "${VERSION}" | tee /tmp/.version;
+    echo -n "${VERSION}" | tee /tmp/.version
 
 RUN set -ex; \
     mkdir /opt/compose/dist; \
