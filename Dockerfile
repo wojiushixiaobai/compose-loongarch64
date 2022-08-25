@@ -1,66 +1,39 @@
-from cr.loongnix.cn/loongson/loongnix:20 as build
-WORKDIR /opt
-ARG CRYPTOGRAPHY_VERSION=36.0.1
-ENV CRYPTOGRAPHY_VERSION=${CRYPTOGRAPHY_VERSION}
+FROM cr.loongnix.cn/loongson/loongnix:20
 
-COPY config /root/.cargo/config
+ARG COMPOSE_VERSION=v2.10.1
 
-RUN set -ex \
-    && apt-get update \
-    && apt-get install -y git \
-    && apt-get install -y python3.7 python3.7-dev python3-pip python3-venv docker-ce-cli cargo \
-    && apt-get install --no-install-recommends -y curl wget gcc libc-dev libffi-dev libgcc-8-dev libssl-dev make openssl zlib1g-dev \
-    && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN set -ex \
-    && python3 -m venv /opt/py3 \
-    && . /opt/py3/bin/activate \
-    && pip install --upgrade pip \
-    && pip install --upgrade setuptools \
-    && pip install --upgrade wheel \
-    && pip download cryptography==${CRYPTOGRAPHY_VERSION} \
-    && tar -xf cryptography-${CRYPTOGRAPHY_VERSION}.tar.gz \
-    && cd /opt/cryptography-${CRYPTOGRAPHY_VERSION} \
-    && sed -i 's@checksum = "fbe5e23404da5b4f555ef85ebed98fb4083e55a00c317800bc2a50ede9f3d219"@# checksum = "fbe5e23404da5b4f555ef85ebed98fb4083e55a00c317800bc2a50ede9f3d219"@g' src/rust/Cargo.lock \
-    && pip wheel --wheel-dir=/opt/wheels ./ \
-    && pip install /opt/wheels/$(ls /opt/wheels/ | grep cryptography)
-
-from cr.loongnix.cn/loongson/loongnix:20
-ARG COMPOSE_VERSION=1.29.2
 ENV COMPOSE_VERSION=${COMPOSE_VERSION}
 
-RUN set -ex \
-    && apt-get update \
-    && apt-get install -y git \
-    && apt-get install -y python3.7 python3.7-dev python3-pip python3-venv docker-ce-cli cargo \
-    && apt-get install --no-install-recommends -y curl wget gcc libc-dev libffi-dev libgcc-8-dev libssl-dev make openssl zlib1g-dev \
-    && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+RUN set -ex; \
+    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime; \
+    apt-get update; \
+    apt-get install -y golang-1.18 git file make
 
-RUN set -ex \
-    && git clone -b ${COMPOSE_VERSION} https://github.com/docker/compose /code
+RUN set -ex; \
+    git clone -b ${COMPOSE_VERSION} https://github.com/docker/compose /opt/compose; \
 
-WORKDIR /code
+WORKDIR /opt/compose
 
-COPY --from=build /opt/wheels /tmp/wheels
+ENV GOPROXY=https://goproxy.io \
+    GOFLAGS=-mod=vendor \
+    CGO_ENABLED=0 \
+    PATH=/usr/lib/go-1.18/bin:$PATH
 
-RUN set -ex \
-    && python3 -m venv /opt/py3 \
-    && . /opt/py3/bin/activate \
-    && pip install wheel \
-    && pip install /tmp/wheels/$(ls /tmp/wheels/ | grep cryptography) \
-    && pip install -r requirements.txt -r requirements-dev.txt \
-    && pip install pyinstaller \
-    && rm -rf ~/.cache/pip
+RUN set -ex; \
+    go mod download -x; \
+    go mod tidy; \
+    go mod vendor; \
+    PKG=github.com/docker/compose/v2 VERSION=$(git describe --match 'v[0-9]*' --dirty='.m' --always --tags); \
+    echo "-X ${PKG}/internal.Version=${VERSION}" | tee /tmp/.ldflags; \
+    echo -n "${VERSION}" | tee /tmp/.version;
 
-RUN set -ex \
-    && echo "$(script/build/write-git-sha)" > compose/GITSHA \
-    && . /opt/py3/bin/activate \
-    && pyinstaller docker-compose.spec \
-    && mv dist/docker-compose "dist/docker-compose-Linux-$(uname -m)" \
-    && chmod 755 "dist/docker-compose-Linux-$(uname -m)" \
-    && echo "$(md5sum dist/docker-compose-Linux-$(uname -m) | awk '{print $1}')" > "dist/docker-compose-Linux-$(uname -m).md5"
+RUN set -ex; \
+    mkdir /opt/compose/dist; \
+    go build -trimpath -tags "$BUILD_TAGS" -ldflags "$(cat /tmp/.ldflags) -w -s" -o /opt/compose/dist/docker-compose ./cmd; \
+    cd /opt/compose/dist; \
+    mv docker-compose docker-compose-linux-$(uname -m); \
+    sha256sum docker-compose-linux-loongarch64 > /tmp/checksums.txt; \
+    cat /tmp/checksums.txt | while read sum file; do echo "$sum *$file" > ${file#\*}.sha256; done
 
 VOLUME /dist
 
