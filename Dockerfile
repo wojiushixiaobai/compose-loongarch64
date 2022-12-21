@@ -1,4 +1,4 @@
-FROM cr.loongnix.cn/loongson/loongnix:20
+FROM golang:1.19-loongnix
 
 ARG COMPOSE_VERSION=v2.13.0
 
@@ -7,7 +7,7 @@ ENV COMPOSE_VERSION=${COMPOSE_VERSION}
 RUN set -ex; \
     ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime; \
     apt-get update; \
-    apt-get install -y golang-1.19 git file make
+    apt-get install -y git file make
 
 RUN set -ex; \
     git clone -b ${COMPOSE_VERSION} https://github.com/docker/compose /opt/compose
@@ -16,8 +16,7 @@ WORKDIR /opt/compose
 
 ENV GOPROXY=https://goproxy.io \
     GOFLAGS=-mod=vendor \
-    CGO_ENABLED=0 \
-    PATH=/usr/lib/go-1.19/bin:$PATH
+    CGO_ENABLED=0
 
 RUN set -ex; \
     go mod download -x; \
