@@ -1,6 +1,6 @@
 FROM golang:1.20-buster
 
-ARG COMPOSE_VERSION=v2.17.3
+ARG COMPOSE_VERSION=v2.18.0
 
 ENV COMPOSE_VERSION=${COMPOSE_VERSION}
 
@@ -10,7 +10,7 @@ RUN set -ex; \
     apt-get install -y git file make
 
 RUN set -ex; \
-    git clone -b ${COMPOSE_VERSION} https://github.com/docker/compose /opt/compose
+    git clone -b ${COMPOSE_VERSION} https://github.com/docker/compose /opt/compose --depth=1
 
 WORKDIR /opt/compose
 
