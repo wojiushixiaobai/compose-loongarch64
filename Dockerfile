@@ -1,4 +1,4 @@
-FROM golang:1.20-buster
+FROM golang:1.20-buster as builder
 
 ARG COMPOSE_VERSION=v2.19.0
 
@@ -33,6 +33,12 @@ RUN set -ex; \
     mv docker-compose docker-compose-linux-$(uname -m); \
     sha256sum docker-compose-linux-loongarch64 > /tmp/checksums.txt; \
     cat /tmp/checksums.txt | while read sum file; do echo "$sum *$file" > ${file#\*}.sha256; done
+
+FROM debian:buster-slim
+
+WORKDIR /opt/compose
+
+COPY --from=builder /opt/compose/dist /opt/compose/dist
 
 VOLUME /dist
 
