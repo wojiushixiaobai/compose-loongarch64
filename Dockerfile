@@ -1,4 +1,4 @@
-FROM golang:1.21-buster as builder
+FROM golang:1.20-buster as builder
 
 ARG COMPOSE_VERSION=v2.19.0
 
