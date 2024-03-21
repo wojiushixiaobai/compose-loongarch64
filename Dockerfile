@@ -1,6 +1,6 @@
 FROM golang:1.21-buster as builder
 
-ARG COMPOSE_VERSION=v2.19.0
+ARG COMPOSE_VERSION=v2.25.0
 
 ENV COMPOSE_VERSION=${COMPOSE_VERSION}
 
@@ -14,8 +14,7 @@ RUN set -ex; \
 
 WORKDIR /opt/compose
 
-ENV GOPROXY=https://goproxy.io \
-    GOFLAGS=-mod=vendor \
+ENV GOFLAGS=-mod=vendor \
     CGO_ENABLED=0
 
 RUN set -ex; \
