@@ -1,4 +1,6 @@
-FROM golang:1.21-buster as builder
+ARG GO_VERSION=1.21
+
+FROM golang:${GO_VERSION}-buster AS builder
 
 ARG COMPOSE_VERSION=v2.25.0
 
@@ -41,4 +43,4 @@ COPY --from=builder /opt/compose/dist /opt/compose/dist
 
 VOLUME /dist
 
-CMD cp -rf dist/* /dist/
+CMD ["cp", "-rf", "dist/*", "/dist/"]
