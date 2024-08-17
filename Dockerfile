@@ -43,4 +43,4 @@ COPY --from=builder /opt/compose/dist /opt/compose/dist
 
 VOLUME /dist
 
-CMD ["cp", "-rf", "dist/*", "/dist/"]
+CMD cp -rf dist/* /dist/
