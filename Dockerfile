@@ -6,7 +6,9 @@ ARG COMPOSE_VERSION=v2.25.0
 
 ENV COMPOSE_VERSION=${COMPOSE_VERSION}
 
-RUN set -ex; \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    set -ex; \
     ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime; \
     apt-get update; \
     apt-get install -y git file make
@@ -19,7 +21,8 @@ WORKDIR /opt/compose
 ENV GOFLAGS=-mod=vendor \
     CGO_ENABLED=0
 
-RUN set -ex; \
+RUN --mount=type=cache,target=/go/pkg/mod \
+    set -ex; \
     go mod download -x; \
     go mod tidy; \
     go mod vendor; \
@@ -27,7 +30,8 @@ RUN set -ex; \
     echo "-X ${PKG}/internal.Version=${VERSION}" | tee /tmp/.ldflags; \
     echo -n "${VERSION}" | tee /tmp/.version
 
-RUN set -ex; \
+RUN --mount=type=cache,target=/go/pkg/mod \
+    set -ex; \
     mkdir /opt/compose/dist; \
     go build -trimpath -tags "$BUILD_TAGS" -ldflags "$(cat /tmp/.ldflags) -w -s" -o /opt/compose/dist/docker-compose ./cmd; \
     cd /opt/compose/dist; \
