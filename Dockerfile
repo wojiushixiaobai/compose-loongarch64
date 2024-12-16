@@ -1,8 +1,8 @@
-ARG GO_VERSION=1.21
+ARG GO_VERSION=1.23
 
-FROM golang:${GO_VERSION}-buster AS builder
+FROM cr.loongnix.cn/library/golang:${GO_VERSION}-buster AS builder
 
-ARG COMPOSE_VERSION=v2.25.0
+ARG COMPOSE_VERSION=v2.32.1
 
 ENV COMPOSE_VERSION=${COMPOSE_VERSION}
 
@@ -39,7 +39,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     sha256sum docker-compose-linux-loongarch64 > /tmp/checksums.txt; \
     cat /tmp/checksums.txt | while read sum file; do echo "$sum *$file" > ${file#\*}.sha256; done
 
-FROM debian:buster-slim
+FROM cr.loongnix.cn/library/debian:buster-slim
 
 WORKDIR /opt/compose
 
